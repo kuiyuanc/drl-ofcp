@@ -177,7 +177,7 @@ class Card ():
 
         color = False
         try:
-            from termcolor import colored
+            from termcolor import colored # type: ignore
             ### for mac, linux: http://pypi.python.org/pypi/termcolor
             ### can use for windows: http://pypi.python.org/pypi/colorama
             color = True

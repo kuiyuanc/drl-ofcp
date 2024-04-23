@@ -23,7 +23,7 @@ class Evaluator(object):
             7 : self._seven
         }
 
-    def evaluate(self, cards, board):
+    def evaluate(self, cards, board=[]):
         """
         This is the function that the user calls to get a hand rank.
 
