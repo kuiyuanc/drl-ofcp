@@ -18,9 +18,10 @@ class Evaluator(object):
         self.table = LookupTable()
 
         self.hand_size_map = {
-            5 : self._five,
-            6 : self._six,
-            7 : self._seven
+            3: self._three,
+            5: self._five,
+            6: self._six,
+            7: self._seven
         }
 
     def evaluate(self, cards, board=[]):
@@ -32,6 +33,10 @@ class Evaluator(object):
         """
         all_cards = cards + board
         return self.hand_size_map[len(all_cards)](all_cards)
+
+    def _three(self, cards):
+        prime = Card.prime_product_from_hand(cards)
+        return self.table.three_card_lookup[prime]
 
     def _five(self, cards):
         """
@@ -109,6 +114,8 @@ class Evaluator(object):
             return LookupTable.MAX_TO_RANK_CLASS[LookupTable.MAX_PAIR]
         elif hr <= LookupTable.MAX_HIGH_CARD:
             return LookupTable.MAX_TO_RANK_CLASS[LookupTable.MAX_HIGH_CARD]
+        elif hr <= LookupTable.MAX_THREE_CARD_HIGH_CARD:
+            return LookupTable.MAX_TO_RANK_CLASS[LookupTable.MAX_THREE_CARD_HIGH_CARD]
         else:
             raise Exception("Inavlid hand rank, cannot return rank class")
 
@@ -140,7 +147,7 @@ class Evaluator(object):
         stages = ["FLOP", "TURN", "RIVER"]
 
         for i in range(len(stages)):
-            line = ("=" * line_length + " %s " +  "=" * line_length)
+            line = ("=" * line_length + " %s " + "=" * line_length)
             print(line % stages[i])
 
             best_rank = 7463  # rank one worse than worst hand
