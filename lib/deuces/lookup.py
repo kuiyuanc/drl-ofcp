@@ -5,36 +5,34 @@ class LookupTable(object):
     """
     Number of Distinct Hand Values:
 
-    Straight Flush         10
-    Four of a Kind         156      [(13 choose 2) * (2 choose 1)]
-    Full Houses            156      [(13 choose 2) * (2 choose 1)]
-    Flush                  1277     [(13 choose 5) - 10 straight flushes]
-    Straight               10
-    Three of a Kind        858      [(13 choose 3) * (3 choose 1)]
-    Two Pair               858      [(13 choose 3) * (3 choose 2)]
-    One Pair               2860     [(13 choose 4) * (4 choose 1)]
-    High Card              1277     [(13 choose 5) - 10 straights]
-    Three Card High Card + 286     [(13 choose 3)]
+    Straight Flush             10
+    Four of a Kind             156      [(13 choose 2) * (2 choose 1)]
+    Full Houses                156      [(13 choose 2) * (2 choose 1)]
+    Flush                      1277     [(13 choose 5) - 10 straight flushes]
+    Straight                   10
+    Three of a Kind            858      [(13 choose 3) * (3 choose 1)]
+    Three Card Three of a Kind 13       [(13 choose 1)]
+    Two Pair                   858      [(13 choose 3) * (3 choose 2)]
+    One Pair                   2860     [(13 choose 4) * (4 choose 1)]
+    Three Card One Pair        156      [(13 choose 1) * (12 choose 1)]
+    High Card                  1277     [(13 choose 5) - 10 straights]
+    Three Card High Card +     286      [(13 choose 3)]
     ----------------------------
-    TOTAL                  7748
-
-    Here we create a lookup table which maps:
-        5 card hand's unique prime product => rank in range [1, 7462]
-
-    Examples:
-    * Royal flush (best hand possible)          => 1
-    * 7-5-4-3-2 unsuited (worst hand possible)  => 7462
+    TOTAL                      7917
     """
-    MAX_STRAIGHT_FLUSH       = 10
-    MAX_FOUR_OF_A_KIND       = 166
-    MAX_FULL_HOUSE           = 322
-    MAX_FLUSH                = 1599
-    MAX_STRAIGHT             = 1609
-    MAX_THREE_OF_A_KIND      = 2467
-    MAX_TWO_PAIR             = 3325
-    MAX_PAIR                 = 6185
-    MAX_HIGH_CARD            = 7462
-    MAX_THREE_CARD_HIGH_CARD = 7748
+    MAX_STRAIGHT_FLUSH    = 10
+    MAX_FOUR_OF_A_KIND    = 166
+    MAX_FULL_HOUSE        = 322
+    MAX_FLUSH             = 1599
+    MAX_STRAIGHT          = 1609
+    # MAX_THREE_OF_A_KIND = 2467
+    MAX_THREE_OF_A_KIND   = 2480
+    # MAX_TWO_PAIR        = 3325
+    MAX_TWO_PAIR          = 3338
+    # MAX_PAIR            = 6185
+    MAX_PAIR              = 6354
+    # MAX_HIGH_CARD       = 7462
+    MAX_HIGH_CARD         = 7917
 
     MAX_TO_RANK_CLASS = {
         MAX_STRAIGHT_FLUSH: 1,
@@ -46,7 +44,6 @@ class LookupTable(object):
         MAX_TWO_PAIR: 7,
         MAX_PAIR: 8,
         MAX_HIGH_CARD: 9,
-        MAX_THREE_CARD_HIGH_CARD: 9
     }
 
     RANK_CLASS_TO_STRING = {
@@ -68,13 +65,11 @@ class LookupTable(object):
         # create dictionaries
         self.flush_lookup = {}
         self.unsuited_lookup = {}
-        self.three_card_lookup = {}
 
         # create the lookup table in piecewise fashion
         self.flushes()  # this will call straights and high cards method,
                         # we reuse some of the bit sequences
         self.multiples()
-        self.three_cards()
 
     def flushes(self):
         """
@@ -162,6 +157,12 @@ class LookupTable(object):
             rank += 1
 
         rank = LookupTable.MAX_PAIR + 1
+
+        gen = self.get_lexographically_next_bit_sequence(int('0b111', 2))
+        highcards.append(7)
+        highcards.extend((next(gen) for _ in range(286 - 1)))
+        highcards.sort(reverse=True)
+
         for h in highcards:
             prime_product = Card.prime_product_from_rankbits(h)
             self.unsuited_lookup[prime_product] = rank
@@ -218,6 +219,9 @@ class LookupTable(object):
                 self.unsuited_lookup[product] = rank
                 rank += 1
 
+            self.unsuited_lookup[Card.PRIMES[r]**3] = rank
+            rank += 1
+
         # 4) Two Pair
         rank = LookupTable.MAX_THREE_OF_A_KIND + 1
 
@@ -242,57 +246,23 @@ class LookupTable(object):
 
             kickers = list(backwards_ranks[:])
             kickers.remove(pairrank)
-            kgen = itertools.combinations(kickers, 3)
 
-            for kickers in kgen:
+            for k1 in kickers:
 
-                k1, k2, k3 = kickers
-                product = Card.PRIMES[pairrank]**2 * Card.PRIMES[k1] \
-                        * Card.PRIMES[k2] * Card.PRIMES[k3]
-                self.unsuited_lookup[product] = rank
-                rank += 1
+                product = Card.PRIMES[pairrank]**2 * Card.PRIMES[k1]
+                if len(left_kickers := tuple(k for k in kickers if k < k1)) < 2:
 
-    def three_cards(self):
-        """
-        Rank high card, pair, and three of a kind of 3-card-poker.
+                    self.unsuited_lookup[product] = rank
+                    rank += 1
 
-        Number of Distinct Hand Values:
+                else:
+                    for k2, k3 in itertools.combinations(left_kickers, 2):
 
-        Three of a Kind  13       [(13 choose 1)]
-        One Pair         156      [(13 choose 2) * (2 choose 1)]
-        High Card      + 286      [(13 choose 3)]
-        -------------------------
-        TOTAL            455
+                        self.unsuited_lookup[product * Card.PRIMES[k2] * Card.PRIMES[k3]] = rank
+                        rank += 1
 
-        Here we create a lookup table which maps:
-            3 card hand's unique prime product => rank in range (1609, 2467] or (3325, 6185] or (6185, 7462]
-        """
-        backwards_ranks = range(len(Card.INT_RANKS) - 1, -1, -1)
-
-        # 1) Three of a Kind
-        rank = LookupTable.MAX_STRAIGHT
-        for r in backwards_ranks:
-            rank += 66  # [(12 choose 2)]
-            self.three_card_lookup[Card.PRIMES[r]**3] = rank
-
-        # 2) Pair
-        # TODO: deal with new kicker in 3-card only
-        rank = LookupTable.MAX_TWO_PAIR
-        for r in backwards_ranks:
-            for kicker in (kicker for kicker in list(backwards_ranks) if kicker != r):
-                rank += kicker * (kicker - 1) // 2
-                self.three_card_lookup[Card.PRIMES[r]**2 * Card.PRIMES[kicker]] = rank
-
-
-        # 3) High Card
-        # TODO: deal with new r1, r2, r3 in 3-card only
-        rank = LookupTable.MAX_PAIR
-        for r1 in backwards_ranks:
-            for r2 in range(r1 - 1, -1, -1):
-                for r3 in range(r2 - 1, -1, -1):
-                    rank += r3 * (r3 - 1) // 2 - 1
-                    self.three_card_lookup[Card.PRIMES[r1] * Card.PRIMES[r2] * Card.PRIMES[r3]] = rank
-
+                    self.unsuited_lookup[product] = rank
+                    rank += 1
 
     def write_table_to_disk(self, table, filepath):
         """

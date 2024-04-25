@@ -25,7 +25,7 @@ class Action:
 
 class Ofcp:
     NUM_INITIAL_CARDS = 5
-    MAX_RANK = LookupTable.MAX_THREE_CARD_HIGH_CARD + 1
+    MAX_RANK = LookupTable.MAX_HIGH_CARD + 1
 
     def __init__(self, *, num_players: int = 2) -> None:
         if num_players != 2:

@@ -36,7 +36,7 @@ class Evaluator(object):
 
     def _three(self, cards):
         prime = Card.prime_product_from_hand(cards)
-        return self.table.three_card_lookup[prime]
+        return self.table.unsuited_lookup[prime]
 
     def _five(self, cards):
         """
@@ -114,8 +114,6 @@ class Evaluator(object):
             return LookupTable.MAX_TO_RANK_CLASS[LookupTable.MAX_PAIR]
         elif hr <= LookupTable.MAX_HIGH_CARD:
             return LookupTable.MAX_TO_RANK_CLASS[LookupTable.MAX_HIGH_CARD]
-        elif hr <= LookupTable.MAX_THREE_CARD_HIGH_CARD:
-            return LookupTable.MAX_TO_RANK_CLASS[LookupTable.MAX_THREE_CARD_HIGH_CARD]
         else:
             raise Exception("Inavlid hand rank, cannot return rank class")
 
