@@ -73,3 +73,11 @@ def test_go():
     # or just a summary of the entire hand
     hands = [player1_hand, player2_hand]
     evaluator.hand_summary(board, hands)
+
+    hand1 = [Card.new('2h'), Card.new('2s'), Card.new('Jc')]
+    hand2 = [Card.new('2d'), Card.new('2c'), Card.new('Jd')]
+    hand3 = [Card.new('2h'), Card.new('2s'), Card.new('2c')]
+    hand4 = [Card.new('2d'), Card.new('2c'), Card.new('Jd'), Card.new('Th'), Card.new('3s')]
+    assert evaluator.evaluate(hand1) == evaluator.evaluate(hand2)
+    assert evaluator.evaluate(hand1) > evaluator.evaluate(hand4)
+    assert evaluator.evaluate(hand3) < evaluator.evaluate(hand4)
