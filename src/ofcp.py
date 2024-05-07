@@ -12,15 +12,15 @@ from numpy.typing import NDArray
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-class Ofcp:
+class OFCP:
     class Street(Enum):
         FRONT = "front"
         MID = "mid"
         BACK = "back"
 
     class Action:
-        def __init__(self, street: 'Ofcp.Street', card: int) -> None:
-            self.street: 'Ofcp.Street' = street
+        def __init__(self, street: 'OFCP.Street', card: int) -> None:
+            self.street: 'OFCP.Street' = street
             self.card: int = card
 
     NUM_INITIAL_CARDS = 5
@@ -80,15 +80,15 @@ class Ofcp:
         def __init__(self) -> None:
             pass
 
-        def __call__(self, state: 'Ofcp') -> 'Ofcp.Action':
+        def __call__(self, state: 'OFCP') -> 'OFCP.Action':
             return random.choice(state.current_player().valid_actions())
 
-        def copy(self) -> 'Ofcp.Agent':
+        def copy(self) -> 'OFCP.Agent':
             return self
 
     class Player:
         class Eval:
-            def __init__(self, *, ranks: dict['Ofcp.Street', int], royalty: int, is_burst: bool) -> None:
+            def __init__(self, *, ranks: dict['OFCP.Street', int], royalty: int, is_burst: bool) -> None:
                 self.ranks = ranks.values()
                 self.royalty = royalty
                 self.is_burst = is_burst
@@ -99,12 +99,12 @@ class Ofcp:
                 yield self.royalty
                 yield self.is_burst
 
-        def __init__(self, *, hands: list[int], agent: 'Ofcp.Agent') -> None:
-            self.streets: dict['Ofcp.Street', list[int]] = {street: [] for street in Ofcp.Street}
+        def __init__(self, *, hands: list[int], agent: 'OFCP.Agent') -> None:
+            self.streets: dict['OFCP.Street', list[int]] = {street: [] for street in OFCP.Street}
             self.hands: list[int] = sorted(hands)
-            self.agent: 'Ofcp.Agent' = agent
+            self.agent: 'OFCP.Agent' = agent
 
-        def __call__(self, *, state: 'Ofcp', card: int | None = None) -> 'Ofcp.Action':
+        def __call__(self, *, state: 'OFCP', card: int | None = None) -> 'OFCP.Action':
             action = self.agent(state)
             self.streets[action.street].append(self.hands.pop(self.hands.index(action.card)))
             self.streets[action.street].sort()
@@ -113,37 +113,37 @@ class Ofcp:
                 self.hands.sort()
             return action
 
-        def copy(self) -> 'Ofcp.Player':
-            copied = Ofcp.Player(hands=self.hands, agent=self.agent.copy())
+        def copy(self) -> 'OFCP.Player':
+            copied = OFCP.Player(hands=self.hands, agent=self.agent.copy())
             copied.streets = {street: hand.copy() for street, hand in self.streets.items()}
             return copied
 
-        def set_agent(self, agent: 'Ofcp.Agent') -> None:
+        def set_agent(self, agent: 'OFCP.Agent') -> None:
             self.agent = agent
 
-        def valid_actions(self) -> tuple['Ofcp.Action', ...]:
-            return tuple(Ofcp.Action(street, card) for card in self.hands for street in Ofcp.Street
-                         if len(self.streets[street]) < Ofcp.NUM_SLOTS[street])
+        def valid_actions(self) -> tuple['OFCP.Action', ...]:
+            return tuple(OFCP.Action(street, card) for card in self.hands for street in OFCP.Street
+                         if len(self.streets[street]) < OFCP.NUM_SLOTS[street])
 
-        def eval(self) -> 'Ofcp.Player.Eval':
+        def eval(self) -> 'OFCP.Player.Eval':
             ranks, is_burst = self._ranks()
-            return Ofcp.Player.Eval(ranks=ranks, royalty=self._royalty(ranks), is_burst=is_burst)
+            return OFCP.Player.Eval(ranks=ranks, royalty=self._royalty(ranks), is_burst=is_burst)
 
         def reset(self, *, hands: list[int]) -> None:
-            self.streets = {street: [] for street in Ofcp.Street}
+            self.streets = {street: [] for street in OFCP.Street}
             self.hands = hands
 
-        def _ranks(self) -> tuple[dict['Ofcp.Street', int], bool]:
-            ranks = {street: Ofcp.EVALUATOR.evaluate(hand) for street, hand in self.streets.items()}
-            is_burst = ranks[Ofcp.Street.FRONT] < ranks[Ofcp.Street.MID] or ranks[Ofcp.Street.MID] < ranks[Ofcp.Street.BACK]
-            return {street: Ofcp.RANK_BURST for street in Ofcp.Street} if is_burst else ranks, is_burst
+        def _ranks(self) -> tuple[dict['OFCP.Street', int], bool]:
+            ranks = {street: OFCP.EVALUATOR.evaluate(hand) for street, hand in self.streets.items()}
+            is_burst = ranks[OFCP.Street.FRONT] < ranks[OFCP.Street.MID] or ranks[OFCP.Street.MID] < ranks[OFCP.Street.BACK]
+            return {street: OFCP.RANK_BURST for street in OFCP.Street} if is_burst else ranks, is_burst
 
-        def _royalty(self, ranks: dict['Ofcp.Street', int]) -> int:
-            classes = {street: Ofcp.EVALUATOR.get_rank_class(rank) if rank < Ofcp.RANK_BURST else len(LookupTable.MAX_TO_RANK_CLASS)
+        def _royalty(self, ranks: dict['OFCP.Street', int]) -> int:
+            classes = {street: OFCP.EVALUATOR.get_rank_class(rank) if rank < OFCP.RANK_BURST else len(LookupTable.MAX_TO_RANK_CLASS)
                        for street, rank in ranks.items()}
-            front = Ofcp.ROYALTY_LOOKUP.get((Ofcp.Street.FRONT, classes[Ofcp.Street.FRONT]), {}).get(ranks[Ofcp.Street.FRONT], 0)
-            mid = Ofcp.ROYALTY_LOOKUP.get((Ofcp.Street.MID, classes[Ofcp.Street.MID]), 0) + (20 if ranks[Ofcp.Street.MID] == 1 else 0)
-            end = Ofcp.ROYALTY_LOOKUP.get((Ofcp.Street.BACK, classes[Ofcp.Street.BACK]), 0) + (10 if ranks[Ofcp.Street.BACK] == 1 else 0)
+            front = OFCP.ROYALTY_LOOKUP.get((OFCP.Street.FRONT, classes[OFCP.Street.FRONT]), {}).get(ranks[OFCP.Street.FRONT], 0)
+            mid = OFCP.ROYALTY_LOOKUP.get((OFCP.Street.MID, classes[OFCP.Street.MID]), 0) + (20 if ranks[OFCP.Street.MID] == 1 else 0)
+            end = OFCP.ROYALTY_LOOKUP.get((OFCP.Street.BACK, classes[OFCP.Street.BACK]), 0) + (10 if ranks[OFCP.Street.BACK] == 1 else 0)
             return front + mid + end
 
     class Eval:
@@ -170,11 +170,11 @@ class Ofcp:
             raise ValueError("Invalid number of players")
 
         self.deck: Deck = Deck()
-        self.players: list[Ofcp.Player] = [Ofcp.Player(hands=self.deck.draw(Ofcp.NUM_INITIAL_CARDS), agent=Ofcp.Agent())
+        self.players: list[OFCP.Player] = [OFCP.Player(hands=self.deck.draw(OFCP.NUM_INITIAL_CARDS), agent=OFCP.Agent())
                                            for _ in range(num_players)]
         self.turn: int = 0
 
-    def __iter__(self) -> 'Ofcp':
+    def __iter__(self) -> 'OFCP':
         return self
 
     def __next__(self) -> bool:
@@ -182,7 +182,7 @@ class Ofcp:
             return True
         raise StopIteration
 
-    def set_player_agent(self, *, player_id: int, agent: 'Ofcp.Agent') -> None:
+    def set_player_agent(self, *, player_id: int, agent: 'OFCP.Agent') -> None:
         if player_id < 1 or player_id > len(self.players):
             raise ValueError("Invalid player ID")
         self.players[player_id - 1].set_agent(agent)
@@ -191,38 +191,38 @@ class Ofcp:
         drawn_card = self.deck.draw() if self.turn / len(self.players) < 8 else None
         self.players[self.turn % len(self.players)](state=self, card=drawn_card)  # type: ignore
         self.turn += 1
-        return self.turn < len(self.players) * sum(Ofcp.NUM_SLOTS.values())
+        return self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
 
-    def current_player(self) -> 'Ofcp.Player':
+    def current_player(self) -> 'OFCP.Player':
         return self.players[self.turn % len(self.players)]
 
-    def eval(self) -> tuple['Ofcp.Eval', ...]:
+    def eval(self) -> tuple['OFCP.Eval', ...]:
         front_ranks, mid_ranks, back_ranks, royalties, bursts = zip(*(player.eval() for player in self.players))
 
         ranks = np.array(tuple(tuple(player_ranks) for player_ranks in zip(front_ranks, mid_ranks, back_ranks)))
         ranks = ranks == ranks.min(axis=0)
         num_best = np.count_nonzero(ranks, axis=0)
-        winner_points = (np.full(len(Ofcp.Street), len(self.players)) - num_best) / num_best
-        street_points = ranks @ winner_points + ~ranks @ np.full(len(Ofcp.Street), -1)
+        winner_points = (np.full(len(OFCP.Street), len(self.players)) - num_best) / num_best
+        street_points = ranks @ winner_points + ~ranks @ np.full(len(OFCP.Street), -1)
 
-        max_street_point = (len(self.players) - 1) * len(Ofcp.Street)
+        max_street_point = (len(self.players) - 1) * len(OFCP.Street)
         winner = street_points == max_street_point
-        scoops = winner * max_street_point - ~winner * len(Ofcp.Street) if winner.sum() else np.zeros(len(self.players))
+        scoops = winner * max_street_point - ~winner * len(OFCP.Street) if winner.sum() else np.zeros(len(self.players))
 
         royalties = np.array(royalties, dtype=np.float64)
         royalties -= royalties.mean()
 
-        return tuple(Ofcp.Eval(street_point=street_point, scoop=scoop, royalty=royalty, is_burst=is_burst)
+        return tuple(OFCP.Eval(street_point=street_point, scoop=scoop, royalty=royalty, is_burst=is_burst)
                      for street_point, scoop, royalty, is_burst in zip(street_points, scoops, royalties, bursts))
 
     def reset(self) -> None:
         self.deck.shuffle()
         for i in range(len(self.players)):
-            self.players[i].reset(hands=self.deck.draw(Ofcp.NUM_INITIAL_CARDS))
+            self.players[i].reset(hands=self.deck.draw(OFCP.NUM_INITIAL_CARDS))
         self.turn = 0
 
 
-class OfcpUI(Ofcp):
+class OFCPUI(OFCP):
     DIVIDER = {1: '=' * 80, 2: '-' * 70}
 
     class Verbosity(IntEnum):
@@ -242,7 +242,7 @@ class OfcpUI(Ofcp):
     def set_verbosity(self, verbosity: int) -> None:
         self.verbosity = verbosity
 
-    def inherit(self, ofcp: Ofcp) -> None:
+    def inherit(self, ofcp: OFCP) -> None:
         self.turn = ofcp.turn
         self.deck.cards = ofcp.deck.cards.copy()
         self.players = [player.copy() for player in ofcp.players]
@@ -251,13 +251,13 @@ class OfcpUI(Ofcp):
         drawn_card = self.deck.draw() if self.turn / len(self.players) < 8 else None
         action = self.players[self.turn % len(self.players)](state=self, card=drawn_card)  # type: ignore
         self.turn += 1
-        not_end = self.turn < len(self.players) * sum(Ofcp.NUM_SLOTS.values())
+        not_end = self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
 
         self._print_round(player_index=(self.turn - 1) % len(self.players) + 1, action=action)
 
         return not_end
 
-    def eval(self) -> tuple[Ofcp.Eval, ...]:
+    def eval(self) -> tuple[OFCP.Eval, ...]:
         evals = super().eval()
 
         self._print_eval(evals)
@@ -274,11 +274,11 @@ class OfcpUI(Ofcp):
     def _print_start(self) -> None:
         if self.verbosity:
             self._print_divider(1)
-        if (self.verbosity & OfcpUI.Verbosity.INTERNAL):
+        if (self.verbosity & OFCPUI.Verbosity.INTERNAL):
             self._print_round()
 
-    def _print_round(self, *, player_index: int | None = None, action: Ofcp.Action | None = None) -> None:
-        if (self.verbosity & OfcpUI.Verbosity.INTERNAL):
+    def _print_round(self, *, player_index: int | None = None, action: OFCP.Action | None = None) -> None:
+        if (self.verbosity & OFCPUI.Verbosity.INTERNAL):
             self._print_state()
             self._print_action(player_index=(self.turn - 1) % len(self.players) + 1, action=action)
             self._print_divider(2)
@@ -291,28 +291,28 @@ class OfcpUI(Ofcp):
         for index, player in enumerate(self.players):
             self._print_player(player, index)
 
-    def _print_player(self, player: Ofcp.Player, index: int, *, hide_class: bool = True) -> None:
+    def _print_player(self, player: OFCP.Player, index: int, *, hide_class: bool = True) -> None:
         print(f"Player {index + 1} ( {player.agent.__class__.__name__} )")
         print(f"\t{"hands":<13} : {''.join(Card.int_to_pretty_str(card) for card in sorted(player.hands))}")
         print(*(f"\t{street.value + " street":<13} : "
                 f"{''.join(Card.int_to_pretty_str(card) for card in player.streets[street]):<45}"
                 f"{"" if hide_class else self._hands_to_str(player.streets[street])}"
-                for street in Ofcp.Street),
+                for street in OFCP.Street),
               sep='\n')
 
     def _hands_to_str(self, hands: list[int]) -> str:
-        return Ofcp.EVALUATOR.class_to_string(Ofcp.EVALUATOR.get_rank_class(Ofcp.EVALUATOR.evaluate(hands)))
+        return OFCP.EVALUATOR.class_to_string(OFCP.EVALUATOR.get_rank_class(OFCP.EVALUATOR.evaluate(hands)))
 
-    def _print_action(self, *, player_index: int | None = None, action: Ofcp.Action | None = None) -> None:
+    def _print_action(self, *, player_index: int | None = None, action: OFCP.Action | None = None) -> None:
         print(f"Player {player_index} put {Card.int_to_pretty_str(action.card)} at {action.street.value} street"
               if player_index and action else "No action yet")
 
-    def _print_eval(self, evals: tuple[Ofcp.Eval, ...]) -> None:
-        if (self.verbosity & OfcpUI.Verbosity.FINAL):
+    def _print_eval(self, evals: tuple[OFCP.Eval, ...]) -> None:
+        if (self.verbosity & OFCPUI.Verbosity.FINAL):
             for index, player in enumerate(self.players):
                 self._print_player(player, index, hide_class=False)
 
-        if (self.verbosity & OfcpUI.Verbosity.SCORE):
+        if (self.verbosity & OFCPUI.Verbosity.SCORE):
             print("Scores :")
             for [index, player], eval in zip(enumerate(self.players), evals):
                 print(f"\tPlayer {index + 1} ( {player.agent.__class__.__name__} )")
@@ -324,7 +324,7 @@ def test() -> None:
 
     begin = time.time()
 
-    ofcp = OfcpUI()
+    ofcp = OFCPUI()
     while ofcp.next():
         pass
     ofcp.eval()
