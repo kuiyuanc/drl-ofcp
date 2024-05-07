@@ -1,3 +1,5 @@
+from lib.deuces.evaluator import LookupTable
+from lib.deuces import Card, Deck, Evaluator
 import os
 import random
 import sys
@@ -10,15 +12,11 @@ from numpy.typing import NDArray
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from lib.deuces import Card, Deck, Evaluator
-from lib.deuces.evaluator import LookupTable
-
-
 class Ofcp:
     class Street(Enum):
         FRONT = "front"
-        MID   = "mid"
-        BACK  = "back"
+        MID = "mid"
+        BACK = "back"
 
     class Action:
         def __init__(self, street: 'Ofcp.Street', card: int) -> None:
@@ -162,10 +160,10 @@ class Ofcp:
             yield self.is_burst
 
         def __str__(self) -> str:
-            return   f"\t\tstreet score : {self.street_point}\n"\
-                   + f"\t\tscoop        : {self.scoop}\n"\
-                   + f"\t\troyalty      : {self.royalty}\n"\
-                   + f"\t\tburst        : {"Yes" if self.is_burst else "No"}"
+            return f"\t\tstreet score : {self.street_point}\n"\
+                + f"\t\tscoop        : {self.scoop}\n"\
+                + f"\t\troyalty      : {self.royalty}\n"\
+                + f"\t\tburst        : {"Yes" if self.is_burst else "No"}"
 
     def __init__(self, *, num_players: int = 2) -> None:
         if num_players < 2 or num_players > 4:
@@ -217,7 +215,7 @@ class Ofcp:
         return tuple(Ofcp.Eval(street_point=street_point, scoop=scoop, royalty=royalty, is_burst=is_burst)
                      for street_point, scoop, royalty, is_burst in zip(street_points, scoops, royalties, bursts))
 
-    def restart(self) -> None:
+    def reset(self) -> None:
         self.deck.shuffle()
         for i in range(len(self.players)):
             self.players[i].reset(hands=self.deck.draw(Ofcp.NUM_INITIAL_CARDS))
@@ -228,11 +226,11 @@ class OfcpUI(Ofcp):
     DIVIDER = {1: '=' * 80, 2: '-' * 70}
 
     class Verbosity(IntEnum):
-        NONE     = 0
-        SCORE    = 1
-        FINAL    = 1 << 1
+        NONE = 0
+        SCORE = 1
+        FINAL = 1 << 1
         INTERNAL = 1 << 2
-        FULL     = (1 << 32) - 1
+        FULL = (1 << 32) - 1
 
     def __init__(self, verbosity: int = Verbosity.FULL, *, num_players: int = 2) -> None:
         super().__init__(num_players=num_players)
@@ -268,8 +266,8 @@ class OfcpUI(Ofcp):
 
         return evals
 
-    def restart(self) -> None:
-        super().restart()
+    def reset(self) -> None:
+        super().reset()
 
         self._print_start()
 
