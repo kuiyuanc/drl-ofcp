@@ -105,19 +105,20 @@ class OFCP:
             self.hands: list[int] = sorted(hands)
             self.agent: 'OFCP.Agent' = agent
 
-        def __call__(self, *, state: 'OFCP', card: int | None = None) -> 'OFCP.Action':
-            action = self.agent(state)
-            self.streets[action.street].append(self.hands.pop(self.hands.index(action.card)))
-            self.streets[action.street].sort()
-            if card:
-                self.hands.append(card)
-                self.hands.sort()
-            return action
+        def __call__(self, state: 'OFCP') -> 'OFCP.Action':
+            return self.agent(state)
 
         def copy(self) -> 'OFCP.Player':
             copied = OFCP.Player(hands=self.hands, agent=self.agent.copy())
             copied.streets = {street: hand.copy() for street, hand in self.streets.items()}
             return copied
+
+        def next(self, *, action: 'OFCP.Action', card: int | None = None) -> None:
+            self.streets[action.street].append(self.hands.pop(self.hands.index(action.card)))
+            self.streets[action.street].sort()
+            if card:
+                self.hands.append(card)
+                self.hands.sort()
 
         def set_agent(self, agent: 'OFCP.Agent') -> None:
             self.agent = agent
