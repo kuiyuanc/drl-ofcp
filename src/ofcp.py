@@ -179,6 +179,13 @@ class OFCP:
     def __bool__(self) -> bool:
         return self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
 
+    def __call__(self, action: 'OFCP.Action | None' = None) -> bool:
+        action = action if action else self.players[self.turn % len(self.players)](self)
+        drawn_card = self.deck.draw() if self.turn / len(self.players) < 8 else None
+        self.players[self.turn % len(self.players)].next(action=action, card=drawn_card)  # type: ignore
+        self.turn += 1
+        return bool(self)
+
     def __iter__(self) -> 'OFCP':
         return self
 
@@ -191,12 +198,6 @@ class OFCP:
         if player_id < 1 or player_id > len(self.players):
             raise ValueError("Invalid player ID")
         self.players[player_id - 1].set_agent(agent)
-
-    def next(self) -> bool:
-        drawn_card = self.deck.draw() if self.turn / len(self.players) < 8 else None
-        self.players[self.turn % len(self.players)](state=self, card=drawn_card)  # type: ignore
-        self.turn += 1
-        return self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
 
     def current_player(self) -> 'OFCP.Player':
         return self.players[self.turn % len(self.players)]
