@@ -245,6 +245,14 @@ class OFCPUI(OFCP):
 
         self._print_start()
 
+    def __call__(self, action: 'OFCP.Action | None' = None) -> bool:
+        action = action if action else self.players[self.turn % len(self.players)](self)
+        super()(action)
+
+        self._print_round(player_index=(self.turn - 1) % len(self.players) + 1, action=action)
+
+        return bool(self)
+
     def set_verbosity(self, verbosity: int) -> None:
         self.verbosity = verbosity
 
@@ -253,15 +261,6 @@ class OFCPUI(OFCP):
         self.deck.cards = ofcp.deck.cards.copy()
         self.players = [player.copy() for player in ofcp.players]
 
-    def next(self) -> bool:
-        drawn_card = self.deck.draw() if self.turn / len(self.players) < 8 else None
-        action = self.players[self.turn % len(self.players)](state=self, card=drawn_card)  # type: ignore
-        self.turn += 1
-        not_end = self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
-
-        self._print_round(player_index=(self.turn - 1) % len(self.players) + 1, action=action)
-
-        return not_end
 
     def eval(self) -> tuple[OFCP.Eval, ...]:
         evals = super().eval()
@@ -330,7 +329,7 @@ def test() -> None:
 
     begin = time.time()
 
-    ofcp = OFCPUI()
+    ofcp = OFCPUI(OFCPUI.Verbosity.SCORE)
     while ofcp.next():
         pass
     ofcp.eval()
