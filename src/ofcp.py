@@ -247,7 +247,7 @@ class OFCPUI(OFCP):
 
     def __call__(self, action: 'OFCP.Action | None' = None) -> bool:
         action = action if action else self.players[self.turn % len(self.players)](self)
-        super()(action)
+        super().__call__(action)
 
         self._print_round(player_index=(self.turn - 1) % len(self.players) + 1, action=action)
 
@@ -330,7 +330,7 @@ def test() -> None:
     begin = time.time()
 
     ofcp = OFCPUI(OFCPUI.Verbosity.SCORE)
-    while ofcp.next():
+    while ofcp():
         pass
     ofcp.eval()
 
