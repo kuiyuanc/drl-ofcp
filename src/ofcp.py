@@ -1,5 +1,3 @@
-from lib.deuces.evaluator import LookupTable
-from lib.deuces import Card, Deck, Evaluator
 import os
 import random
 import sys
@@ -10,6 +8,10 @@ from numpy.typing import NDArray
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+from lib.deuces.evaluator import LookupTable
+from lib.deuces import Card, Deck, Evaluator
 
 
 class OFCP:
