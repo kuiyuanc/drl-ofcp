@@ -4,7 +4,6 @@ import sys
 from enum import Enum, IntEnum
 
 import numpy as np
-from numpy.typing import NDArray
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
