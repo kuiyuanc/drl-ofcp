@@ -190,7 +190,7 @@ class OFCP:
         return self
 
     def __next__(self) -> bool:
-        if self.next():
+        if self():
             return True
         raise StopIteration
 
