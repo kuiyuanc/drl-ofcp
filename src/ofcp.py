@@ -175,6 +175,9 @@ class OFCP:
                                            for _ in range(num_players)]
         self.turn: int = 0
 
+    def __bool__(self) -> bool:
+        return self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
+
     def __iter__(self) -> 'OFCP':
         return self
 
