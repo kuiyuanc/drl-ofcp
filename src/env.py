@@ -1,23 +1,22 @@
+import numpy as np
+from numpy.typing import NDArray
+
 from ofcp import OFCP
 
 
 class Env:
-    def __init__(self):
-        self.ofcp = OFCP()
+    def __init__(self, *, num_players: int = 2) -> None:
+        self.ofcp = OFCP(num_players=num_players)
 
-        # TODO: multiple-player extension
-
-    def __call__(self, action: OFCP.Action) -> tuple[OFCP, float, bool]:
-        reward, done = 0, True
-
-        # TODO: take action
-        # TODO: calculate reward
-        # TODO: check if terminal state
-
-        return self.state(), reward, done
+    def __call__(self, action: OFCP.Action) -> OFCP:
+        self.ofcp(action)
+        return self.ofcp
 
     def state(self) -> OFCP:
         return self.ofcp
+
+    def reward(self) -> NDArray[np.float64]:
+        return np.array.zeros(len(self.ofcp.players)) if self.ofcp else np.array(tuple(sum(eval) for eval in self.ofcp.eval()))
 
     def set_player_agent(self, *, player_id: int, agent: OFCP.Agent) -> None:
         self.ofcp.set_player_agent(player_id=player_id, agent=agent)
