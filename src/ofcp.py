@@ -241,7 +241,7 @@ class OFCPUI(OFCP):
     def __init__(self, verbosity: int = Verbosity.FULL, *, num_players: int = 2) -> None:
         super().__init__(num_players=num_players)
 
-        self.verbosity = verbosity
+        self.set_verbosity(verbosity)
 
         self._print_start()
 
