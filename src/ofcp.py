@@ -96,10 +96,14 @@ class OFCP:
                 self.is_burst = is_burst
 
             def __iter__(self):
+                return self
+
+            def __next__(self):
                 for rank in self.ranks:
                     yield rank
                 yield self.royalty
                 yield self.is_burst
+                raise StopIteration
 
         def __init__(self, *, hands: list[int], agent: 'OFCP.Agent') -> None:
             self.streets: dict['OFCP.Street', list[int]] = {street: [] for street in OFCP.Street}
@@ -156,10 +160,14 @@ class OFCP:
             self.is_burst = is_burst
 
         def __iter__(self):
+            return self
+
+        def __next__(self):
             yield self.street_point
             yield self.scoop
             yield self.royalty
             yield self.is_burst
+            raise StopIteration
 
         def __str__(self) -> str:
             return f"\t\tstreet score : {self.street_point}\n"\
