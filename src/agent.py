@@ -62,8 +62,9 @@ class MCTS(Agent):
             if not self.state:
                 return self
 
-            untried_actions = set(self.state.current_player().valid_actions()) - {child.action for child in self.children}
-            action = random.choice(tuple(untried_actions))
+            valid = self.state.current_player().valid_actions()
+            visited = tuple(child.action for child in self.children)
+            action = random.choice(tuple(action for action in valid if action not in visited))
 
             copy = self.state.copy()
             copy(action)
