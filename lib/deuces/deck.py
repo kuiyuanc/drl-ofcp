@@ -3,9 +3,9 @@ from .card import Card
 
 class Deck:
     """
-    Class representing a deck. The first time we create, we seed the static 
+    Class representing a deck. The first time we create, we seed the static
     deck with the list of unique card integers. Each object instantiated simply
-    makes a copy of this object and shuffles it. 
+    makes a copy of this object and shuffles it.
     """
     _FULL_DECK = []
 
@@ -18,13 +18,14 @@ class Deck:
         shuffle(self.cards)
 
     def draw(self, n=1):
-        if n == 1:
-            return self.cards.pop(0)
+        # if n == 1:
+        #     return self.cards.pop(0)
 
-        cards = []
-        for i in range(n):
-            cards.append(self.draw())
-        return cards
+        # cards = []
+        # for i in range(n):
+        #     cards.append(self.draw())
+        # return cards
+        return self.cards.pop() if n == 1 else [self.draw() for _ in range(n)]
 
     def __str__(self):
         return Card.print_pretty_cards(self.cards)
