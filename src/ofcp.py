@@ -110,7 +110,7 @@ class OFCP:
 
         def copy(self) -> 'OFCP.Player':
             copied = OFCP.Player(hands=self.hands, agent=self.agent.copy())
-            copied.streets = {street: hand.copy() for street, hand in self.streets.items()}
+            copied.streets = {key: value.copy() for key, value in self.streets.items()}
             return copied
 
         def next(self, *, action: 'OFCP.Action', card: int | None = None) -> None:
