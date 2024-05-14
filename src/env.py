@@ -21,8 +21,13 @@ class Env:
     def state(self) -> OFCP:
         return self.ofcp
 
-    def reward(self) -> NDArray[np.float64]:
-        return np.zeros(len(self.ofcp.players)) if self.ofcp else np.array(tuple(float(eval) for eval in self.ofcp.eval()))
+    def reward(self, *, player_id: int, normalized: bool = True) -> float:
+        reward = self.rewards(normalized=normalized)[player_id - 1]
+        return reward / OFCP.Eval.MAX if normalized else reward
+
+    def rewards(self, *, normalized: bool = True) -> NDArray[np.float64]:
+        rewards = np.zeros(len(self.ofcp.players)) if self.ofcp else np.array(tuple(float(eval) for eval in self.ofcp.eval()))
+        return rewards / OFCP.Eval.MAX if normalized else rewards
 
     def set_player_agent(self, *, player_id: int, agent: OFCP.Agent) -> None:
         self.ofcp.set_player_agent(player_id=player_id, agent=agent)
