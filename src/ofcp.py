@@ -151,6 +151,8 @@ class OFCP:
             return front + mid + end
 
     class Eval:
+        MAX = 98
+
         def __init__(self, *, street_point: float, scoop: float, royalty: float, is_burst: bool) -> None:
             self.street_point = street_point
             self.scoop = scoop
