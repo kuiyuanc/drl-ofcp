@@ -8,7 +8,35 @@ from env import Env
 from ofcp import OFCP
 
 
-class MCTS(OFCP.Agent):
+class Agent(OFCP.Agent):
+    def __init__(self, *, player_id: int) -> None:
+        super().__init__()
+
+        self.player_id = player_id
+
+
+class MC(Agent):
+    def __init__(self, *, player_id: int, num_simulations: int) -> None:
+        super().__init__(player_id=player_id)
+
+        self.num_simulations = num_simulations
+
+    def __call__(self, state: OFCP) -> OFCP.Action:
+        valid = state.current_player().valid_actions()
+        num_simulations = max(1, self.num_simulations // len(valid))
+        return max(valid, key=lambda action: self._simulate(state=state, action=action, num_simulations=num_simulations))
+
+    def _simulate(self, *, state: OFCP, action: OFCP.Action, num_simulations: int) -> float:
+        sum_reward = 0
+        for _ in range(num_simulations):
+            env = Env(state.copy())
+            env(action)
+            while env:
+                env()
+            sum_reward += env.reward(player_id=self.player_id)
+        return sum_reward
+
+class MCTS(Agent):
     class Node:
         def __init__(self, state: OFCP, *, max_width: int, parent: 'MCTS.Node | None' = None, action: OFCP.Action | None = None) -> None:
             self.parent = parent
@@ -72,12 +100,10 @@ class MCTS(OFCP.Agent):
             return best_child if best_child else self
 
     def __init__(self, *, num_simulations: int, max_width: int, player_id: int) -> None:
-        super().__init__()
+        super().__init__(player_id=player_id)
 
         self.num_simulations = num_simulations
         self.max_width = max_width
-
-        self.player_id = player_id
 
     def __call__(self, state: OFCP) -> OFCP.Action:
         root = MCTS.Node(state, max_width=self.max_width)
