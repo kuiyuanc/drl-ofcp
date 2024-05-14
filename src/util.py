@@ -1,3 +1,4 @@
+import time
 import random
 
 
@@ -12,3 +13,10 @@ class EpsilonGreedy:
 
     def decay(self) -> None:
         self._epsilon = max(self._min, self._epsilon * self._decay)
+
+
+def timing(f, *args, **kwargs):
+    start = time.time()
+    res = f(*args, **kwargs)
+    print(f"{f.__name__} : {time.time() - start:.2f}s")
+    return res
