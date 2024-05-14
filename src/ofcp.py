@@ -21,8 +21,8 @@ class OFCP:
 
     class Action:
         def __init__(self, street: 'OFCP.Street', card: int) -> None:
-            self.street: 'OFCP.Street' = street
-            self.card: int = card
+            self.street = street
+            self.card = card
 
     NUM_INITIAL_CARDS = 5
     NUM_SLOTS = {Street.FRONT: 3, Street.MID: 5, Street.BACK: 5}
@@ -101,9 +101,9 @@ class OFCP:
                 yield self.is_burst
 
         def __init__(self, *, hands: list[int], agent: 'OFCP.Agent') -> None:
-            self.streets: dict['OFCP.Street', list[int]] = {street: [] for street in OFCP.Street}
-            self.hands: list[int] = sorted(hands)
-            self.agent: 'OFCP.Agent' = agent
+            self.streets = {street: [] for street in OFCP.Street}
+            self.hands = sorted(hands)
+            self.agent = agent
 
         def __call__(self, state: 'OFCP') -> 'OFCP.Action':
             return self.agent(state)
