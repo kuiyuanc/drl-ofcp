@@ -79,7 +79,7 @@ class MCTS(OFCP.Agent):
 
         self.player_id = player_id
 
-    def __call__(self, state: OFCP) -> OFCP.Action | None:
+    def __call__(self, state: OFCP) -> OFCP.Action:
         root = MCTS.Node(state, max_width=self.max_width)
         for _ in range(self.num_simulations):
             # select a node not fully expanded or a node with a terminal state, and expand it
