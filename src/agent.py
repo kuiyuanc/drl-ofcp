@@ -1,91 +1,93 @@
-from collections import deque
+import math
 import random
+
+import numpy as np
+from numpy.typing import NDArray
 
 from env import Env
 from ofcp import OFCP
-from util import EpsilonGreedy
 
 
-class Agent(OFCP.Agent):
-    def __init__(self) -> None:
-        super().__init__()
+class MCTS(OFCP.Agent):
+    class Node:
+        def __init__(self, state: OFCP, *, max_width: int, parent: 'MCTS.Node | None' = None, action: OFCP.Action | None = None) -> None:
+            self.parent = parent
+            self.children = []
 
-    def train(self):
-        pass
-
-
-class MCTS(Agent):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def __call__(self, state: OFCP) -> OFCP.Action:
-        action: OFCP.Action = super().__call__(state)
-
-        # TODO: implement MCTS inference
-
-        return action
-
-
-class DQN(Agent):
-    class Record:
-        def __init__(self, state: OFCP, action: OFCP.Action, reward: float, next_state: OFCP) -> None:
-            self.state = state
+            self.max_width = max_width
             self.action = action
-            self.reward = reward
-            self.next_state = next_state
 
-        def __iter__(self):
-            yield self.state
-            yield self.action
-            yield self.reward
-            yield self.next_state
+            self.state = state
 
-    def __init__(self, *, state_size: int, action_size: int) -> None:
+            self.num_visits = 0
+            self.sum_reward = 0
+
+        def select(self, *, explore_coef: float = math.sqrt(2)) -> 'MCTS.Node':
+            node = self
+            while node.state:
+                if len(node.children) == node.max_width:
+                    node = node._best_child(explore_coef=explore_coef)
+                else:
+                    return node
+            return node
+
+        def expand(self) -> 'MCTS.Node':
+            if not self.state:
+                return self
+
+            untried_actions = set(self.state.current_player().valid_actions()) - {child.action for child in self.children}
+            action = random.choice(tuple(untried_actions))
+
+            copy = self.state.copy()
+            copy(action)
+
+            self.children.append(MCTS.Node(copy, max_width=self.max_width, parent=self, action=action))
+
+            return self.children[-1]
+
+        def simulate(self, player_id: int) -> float:
+            env = Env(self.state)
+            while env:
+                env()
+            return env.reward(player_id=player_id)
+
+        def backpropagate(self, reward: float) -> None:
+            node = self
+            while node:
+                node.num_visits, node.sum_reward = node.num_visits + 1, node.sum_reward + reward
+                node = node.parent
+
+        def best_action(self) -> OFCP.Action:
+            return max(self.children, key=lambda child: child.num_visits).action
+
+        def _best_child(self, *, explore_coef: float) -> 'MCTS.Node':
+            best_score, best_child = -np.inf, None
+            for child in self.children:
+                exploit = child.sum_reward / child.num_visits if child.num_visits else np.inf
+                explore = explore_coef * math.sqrt(math.log(self.num_visits) / child.num_visits)
+                score = exploit + explore
+
+                if score > best_score:
+                    best_score, best_child = score, child
+            return best_child if best_child else self
+
+    def __init__(self, *, num_simulations: int, max_width: int, player_id: int) -> None:
         super().__init__()
 
-        self.state_size = state_size
-        self.action_size = action_size
-        self.memory = deque()
-        self.gamma = 0.95  # discount rate
-        self.epsilon_greedy = EpsilonGreedy()
-        self.learning_rate = 0.001
-        self.model = self._build_model()
+        self.num_simulations = num_simulations
+        self.max_width = max_width
 
-    def __call__(self, state: OFCP) -> OFCP.Action:
-        # TODO: implement DQN inference
-        pass
+        self.player_id = player_id
 
-    def train(self, num_episode: int, *, player_id: int) -> None:
-        env = Env()
-        env.set_player_agent(player_id=player_id, agent=self)
+    def __call__(self, state: OFCP) -> OFCP.Action | None:
+        root = MCTS.Node(state, max_width=self.max_width)
+        for _ in range(self.num_simulations):
+            # select a node not fully expanded or a node with a terminal state, and expand it
+            node = root.select().expand()
+            # simulate until a terminal state, and backpropagate the reward
+            node.backpropagate(node.simulate(self.player_id))
+        return root.best_action()
 
-        for _ in range(num_episode):
-            total_reward, state = 0, env.state()
 
-            while state:
-                action = self(state)
-                next_state = env(action)
-                reward = env.reward()[player_id - 1]
-
-                total_reward += reward
-                self.memory.append(DQN.Record(state, action, reward, next_state))
-                state = next_state
-
-            env.reset()
-
-    def _build_model(self):
-        # TODO: build a DQN model
-        pass
-
-    def _replay(self, batch_size: int) -> None:
-        batch = random.sample(self.memory, batch_size)
-        for state, action, reward, next_state in batch:
-            '''
-            target = reward + (self.gamma * np.amax(self.model.predict(next_state)[0]) if state else 0)
-            target_f = self.model.predict(state)
-            target_f[0][action] = target
-            self.model.fit(state, target_f, epochs=1, verbose=0)
-            '''
-            # TODO: implement DQN replay
-
-        self.epsilon_greedy.decay()
+class D3QN(OFCP.Agent):
+    pass
