@@ -5,12 +5,18 @@ from ofcp import OFCP
 
 
 class Env:
-    def __init__(self, *, num_players: int = 2) -> None:
-        self.ofcp = OFCP(num_players=num_players)
+    def __init__(self, state: OFCP | None = None, *, num_players: int = 2) -> None:
+        self.ofcp = state if state else OFCP(num_players=num_players)
 
-    def __call__(self, action: OFCP.Action) -> OFCP:
+    def __call__(self, action: OFCP.Action | None = None) -> OFCP:
         self.ofcp(action)
         return self.ofcp
+
+    def __bool__(self) -> bool:
+        return bool(self.ofcp)
+
+    def copy(self) -> 'Env':
+        return Env(state=self.ofcp.copy())
 
     def state(self) -> OFCP:
         return self.ofcp
