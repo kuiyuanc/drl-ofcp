@@ -24,6 +24,9 @@ class OFCP:
             self.street = street
             self.card = card
 
+        def __eq__(self, action: 'OFCP.Action') -> bool:
+            return self.street == action.street and self.card == action.card
+
     NUM_INITIAL_CARDS = 5
     NUM_SLOTS = {Street.FRONT: 3, Street.MID: 5, Street.BACK: 5}
     EVALUATOR = Evaluator()
