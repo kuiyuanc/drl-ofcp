@@ -173,13 +173,10 @@ class OFCP:
         if num_players < 2 or num_players > 4:
             raise ValueError("Invalid number of players")
 
-        self.deck: Deck = Deck()
-        self.players: list[OFCP.Player] = [OFCP.Player(hands=self.deck.draw(OFCP.NUM_INITIAL_CARDS), agent=OFCP.Agent())
-                                           for _ in range(num_players)]
-        self.turn: int = 0
-
-    def __bool__(self) -> bool:
-        return self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
+        self.deck = Deck()
+        self.players = [OFCP.Player(hands=self.deck.draw(OFCP.NUM_INITIAL_CARDS), agent=OFCP.Agent())
+                        for _ in range(num_players)]
+        self.turn = 0
 
     def __call__(self, action: 'OFCP.Action | None' = None) -> bool:
         action = action if action else self.players[self.turn % len(self.players)](self)
@@ -196,6 +193,9 @@ class OFCP:
             return True
         raise StopIteration
 
+    def __bool__(self) -> bool:
+        return self.turn < len(self.players) * sum(OFCP.NUM_SLOTS.values())
+
     def copy(self) -> 'OFCP':
         copied = OFCP()
         copied.turn = self.turn
@@ -203,13 +203,19 @@ class OFCP:
         copied.players = [player.copy() for player in self.players]
         return copied
 
+    def current_player(self) -> 'OFCP.Player':
+        return self.players[self.turn % len(self.players)]
+
     def set_player_agent(self, *, player_id: int, agent: 'OFCP.Agent') -> None:
         if player_id < 1 or player_id > len(self.players):
             raise ValueError("Invalid player ID")
         self.players[player_id - 1].set_agent(agent)
 
-    def current_player(self) -> 'OFCP.Player':
-        return self.players[self.turn % len(self.players)]
+    def reset(self) -> None:
+        self.deck.shuffle()
+        for i in range(len(self.players)):
+            self.players[i].reset(hands=self.deck.draw(OFCP.NUM_INITIAL_CARDS))
+        self.turn = 0
 
     def eval(self) -> tuple['OFCP.Eval', ...]:
         front_ranks, mid_ranks, back_ranks, royalties, bursts = zip(*(player.eval() for player in self.players))
@@ -229,12 +235,6 @@ class OFCP:
 
         return tuple(OFCP.Eval(street_point=street_point, scoop=scoop, royalty=royalty, is_burst=is_burst)
                      for street_point, scoop, royalty, is_burst in zip(street_points, scoops, royalties, bursts))
-
-    def reset(self) -> None:
-        self.deck.shuffle()
-        for i in range(len(self.players)):
-            self.players[i].reset(hands=self.deck.draw(OFCP.NUM_INITIAL_CARDS))
-        self.turn = 0
 
 
 class OFCPUI(OFCP):
@@ -265,6 +265,11 @@ class OFCPUI(OFCP):
     def set_verbosity(self, verbosity: int) -> None:
         self.verbosity = verbosity
 
+    def reset(self) -> None:
+        super().reset()
+
+        self._print_start()
+
     def eval(self) -> tuple[OFCP.Eval, ...]:
         evals = super().eval()
 
@@ -274,25 +279,20 @@ class OFCPUI(OFCP):
 
         return evals
 
-    def reset(self) -> None:
-        super().reset()
-
-        self._print_start()
-
     def _print_start(self) -> None:
         if self.verbosity:
             self._print_divider(1)
         if (self.verbosity & OFCPUI.Verbosity.INTERNAL):
             self._print_round()
 
+    def _print_divider(self, level: int) -> None:
+        print(self.DIVIDER[level])
+
     def _print_round(self, *, player_index: int | None = None, action: OFCP.Action | None = None) -> None:
         if (self.verbosity & OFCPUI.Verbosity.INTERNAL):
             self._print_state()
             self._print_action(player_index=(self.turn - 1) % len(self.players) + 1, action=action)
             self._print_divider(2)
-
-    def _print_divider(self, level: int) -> None:
-        print(self.DIVIDER[level])
 
     def _print_state(self) -> None:
         print(f"turn {self.turn:>2d}")
@@ -325,24 +325,3 @@ class OFCPUI(OFCP):
             for [index, player], eval in zip(enumerate(self.players), evals):
                 print(f"\tPlayer {index + 1} ( {player.agent.__class__.__name__} )")
                 print(eval)
-
-
-def test() -> None:
-    import time
-
-    begin = time.time()
-
-    ofcp = OFCPUI(OFCPUI.Verbosity.SCORE)
-    while ofcp():
-        pass
-    ofcp.eval()
-
-    print(f"time : {time.time() - begin:.2f}s")
-
-
-def main():
-    test()
-
-
-if __name__ == "__main__":
-    main()
