@@ -22,7 +22,7 @@ class Env:
         return self.ofcp
 
     def reward(self) -> NDArray[np.float64]:
-        return np.zeros(len(self.ofcp.players)) if self.ofcp else np.array(tuple(sum(eval) for eval in self.ofcp.eval()))
+        return np.zeros(len(self.ofcp.players)) if self.ofcp else np.array(tuple(float(eval) for eval in self.ofcp.eval()))
 
     def set_player_agent(self, *, player_id: int, agent: OFCP.Agent) -> None:
         self.ofcp.set_player_agent(player_id=player_id, agent=agent)

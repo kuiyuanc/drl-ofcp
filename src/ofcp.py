@@ -163,6 +163,9 @@ class OFCP:
             yield self.royalty
             yield self.is_burst
 
+        def __float__(self) -> float:
+            return self.street_point + self.scoop + self.royalty
+
         def __str__(self) -> str:
             return f"\t\tstreet score : {self.street_point}\n"\
                 + f"\t\tscoop        : {self.scoop}\n"\
