@@ -194,6 +194,13 @@ class OFCP:
             return True
         raise StopIteration
 
+    def copy(self) -> 'OFCP':
+        copied = OFCP()
+        copied.turn = self.turn
+        copied.deck.cards = self.deck.cards.copy()
+        copied.players = [player.copy() for player in self.players]
+        return copied
+
     def set_player_agent(self, *, player_id: int, agent: 'OFCP.Agent') -> None:
         if player_id < 1 or player_id > len(self.players):
             raise ValueError("Invalid player ID")
@@ -255,12 +262,6 @@ class OFCPUI(OFCP):
 
     def set_verbosity(self, verbosity: int) -> None:
         self.verbosity = verbosity
-
-    def inherit(self, ofcp: OFCP) -> None:
-        self.turn = ofcp.turn
-        self.deck.cards = ofcp.deck.cards.copy()
-        self.players = [player.copy() for player in ofcp.players]
-
 
     def eval(self) -> tuple[OFCP.Eval, ...]:
         evals = super().eval()
