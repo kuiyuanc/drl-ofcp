@@ -113,15 +113,21 @@ class OFCP:
             copied.streets = {key: value.copy() for key, value in self.streets.items()}
             return copied
 
+        def set_agent(self, agent: 'OFCP.Agent') -> None:
+            self.agent = agent
+
+        def reset(self, *, hands: list[int]) -> None:
+            self.streets = {street: [] for street in OFCP.Street}
+            self.hands = hands
+
         def next(self, *, action: 'OFCP.Action', card: int | None = None) -> None:
-            self.streets[action.street].append(self.hands.pop(self.hands.index(action.card)))
+            self.hands.remove(action.card)
+            self.streets[action.street].append(action.card)
             self.streets[action.street].sort()
+
             if card:
                 self.hands.append(card)
                 self.hands.sort()
-
-        def set_agent(self, agent: 'OFCP.Agent') -> None:
-            self.agent = agent
 
         def valid_actions(self) -> tuple['OFCP.Action', ...]:
             return tuple(OFCP.Action(street, card) for card in self.hands for street in OFCP.Street
@@ -130,10 +136,6 @@ class OFCP:
         def eval(self) -> 'OFCP.Player.Eval':
             ranks, is_burst = self._ranks()
             return OFCP.Player.Eval(ranks=ranks, royalty=self._royalty(ranks), is_burst=is_burst)
-
-        def reset(self, *, hands: list[int]) -> None:
-            self.streets = {street: [] for street in OFCP.Street}
-            self.hands = hands
 
         def _ranks(self) -> tuple[dict['OFCP.Street', int], bool]:
             ranks = {street: OFCP.EVALUATOR.evaluate(hand) for street, hand in self.streets.items()}
