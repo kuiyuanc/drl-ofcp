@@ -85,7 +85,7 @@ class OFCP:
             return random.choice(state.current_player().valid_actions())
 
         def copy(self) -> 'OFCP.Agent':
-            return self
+            return OFCP.Agent()
 
     class Player:
         class Eval:
