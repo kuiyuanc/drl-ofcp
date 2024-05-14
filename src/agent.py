@@ -53,10 +53,9 @@ class MCTS(Agent):
         def select(self, *, explore_coef: float = math.sqrt(2)) -> 'MCTS.Node':
             node = self
             while node.state:
-                if len(node.children) == node.max_width:
-                    node = node._best_child(explore_coef=explore_coef)
-                else:
+                if node._expandable():
                     return node
+                node = node._best_child(explore_coef=explore_coef)
             return node
 
         def expand(self) -> 'MCTS.Node':
@@ -87,6 +86,9 @@ class MCTS(Agent):
 
         def best_action(self) -> OFCP.Action:
             return max(self.children, key=lambda child: child.num_visits).action
+
+        def _expandable(self) -> bool:
+            return len(self.children) < min(self.max_width, len(self.state.current_player().valid_actions()))
 
         def _best_child(self, *, explore_coef: float) -> 'MCTS.Node':
             best_score, best_child = -np.inf, None
